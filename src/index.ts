@@ -30,13 +30,17 @@ class ServerlessMagento {
           this.adminInterfaces = this.variables['adminInterfaces']
 
           this.hooks = {
-               'aws:common:validate:validate': this.run.bind(this),
+               'before:deploy:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
           };
      }
 
-     run() {
+     async createDeploymentArtifacts() {
           this.validateConfig();
-          this.serviceRegistration();
+          await this.performServiceRegistration()
+          .then((res: RegistratonResponse) => {
+               return this.injectServiceContext(res);
+          });
+
      }
 
      validateConfig() {
@@ -59,7 +63,7 @@ class ServerlessMagento {
           });
 
           if (!Array.isArray(this.adminInterfaces)) {
-               this.serverless.cli.log(chalk.red((`Invalid service configuration.`));
+               this.serverless.cli.log(chalk.red(`Invalid service configuration.`));
                this.serverless.cli.log(chalk.red(`adminInterfaces should be an array of urls.`));
                valid = false;
           }
@@ -69,7 +73,7 @@ class ServerlessMagento {
           }
      }
 
-     async serviceRegistration() {
+     performServiceRegistration(): Promise<RegistratonResponse> {
           this.serverless.cli.log(`Registering service with Magento application`);
 
           const registrationRequest = {
@@ -80,14 +84,22 @@ class ServerlessMagento {
           } as RegistrationRequest;
 
 
-          const response: RegistratonResponse = await register(this.baseUrl, 1, registrationRequest)
-          if (response.success == true) {
-               this.serverless.cli.log(chalk.gree('Magento service registration successful'));
-          } else {
-               this.serverless.cli.log(chalk.red('Magento service registration failed'));
-               throw new Error('Unknown registration error. Magento returned failure message.');
-          }
+          return register(this.baseUrl, 1, registrationRequest)
+          .then ((res) => {
+               if (res.success == true) {
+                    this.serverless.cli.log(chalk.gree('Magento service registration successful'));
+               } else {
+                    this.serverless.cli.log(chalk.red('Magento service registration failed'));
+                    throw new Error('Unknown registration error. Magento returned failure message.');
+               }
+               return res
+          });
      }
+
+     injectServiceContext(registrationResponse: RegistratonResponse)  {
+          throw new Error('injectServiceContext Not yet implemented');
+     }
+
 }
 
 module.exports = ServerlessMagento;

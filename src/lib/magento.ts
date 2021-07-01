@@ -28,5 +28,6 @@ const headers = {
 
 export const register = (baseUrl: string, apiVersion: number, data: RegistrationRequest): Promise<RegistratonResponse> => {
      const registrationURL = `${baseUrl}/v${apiVersion}/service/register`;
-     return  axios.post(registrationURL, data, {headers: headers, timeout: 3000});
+     return  axios.post(registrationURL, data, {headers: headers, timeout: 3000})
+     .then((res) => {return res.data});
 }
