@@ -1,10 +1,13 @@
 # Serverless Magento Plugin
 
-This serverless plug-in provides scaffolding around a Magento-connected micro service.
+This serverless plugin provides scaffolding around a Magento-connected micro service.
+It's main responsibility is registering the service with a Magento instance and provide that authorization 
+context into each function in the service.
+
+The registration happens as part of the serverless deploy. If for any reason the registration is not able to take place, the deployment will fail (before any changeset has been deployed).
 
 ## YAML Definition
 Add the following (with correct values) to your `serverless.yml` file:
-
 ```
 custom:
   magento:
@@ -14,6 +17,7 @@ custom:
     integrationId: '123'
     adminInterfaces: ['http://localhost']
 ```
+
 ## Variables
 
 | Variable              | Usage                                                       |
