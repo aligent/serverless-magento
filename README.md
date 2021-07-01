@@ -14,12 +14,12 @@ custom:
     integrationId: '123'
     adminInterfaces: ['http://localhost']
 ```
- ## Variables
+## Variables
 
- | Variable              | Usage                                                       |
- | --------------------- | ----------------------------------------------------------- |
- | baseUrl               |  The base URL - including scheme - of the Magento instance.|
- | name     			 |  The friendly name of the service.|
- | serviceId             |  The service ID.|
- | integrationId         |  The Integration ID|
- | adminInterfaces       |  An array of strings representing the URLs of all admin interfaces to be exposed by Magento|
+| Variable              | Usage                                                       |
+| --------------------- | ----------------------------------------------------------- |
+| baseUrl               |  The base URL - including scheme - of the Magento instance.|
+| name     			 |  The friendly name of the service.|
+| serviceId             |  The service ID.|
+| integrationId         |  The Integration ID|
+| adminInterfaces       |  An array of strings representing the URLs of all admin interfaces to be exposed by Magento|
