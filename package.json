@@ -1,0 +1,29 @@
+{
+  "name": "@aligent/serverless-magento",
+  "version": "1.0.0",
+  "description": "Serverless plugin template",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "tsc ./src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/node": "^15.12.5",
+    "@types/serverless": "^1.78.29",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.5"
+  },
+  "peerDependencies": {
+    "serverless": "2.x"
+  },
+  "engines": {
+    "node": ">=10.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "axios-retry": "^3.1.9",
+    "chalk": "^4.1.1",
+    "source-map-support": "^0.5.19"
+  }
+}
