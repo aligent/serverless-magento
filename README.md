@@ -1,17 +1,25 @@
-# Serverless Plugin
+# Serverless Magento Plugin
 
-This plugin has been generated using the `plugin` template from the [Serverless Framework](https://www.serverless.com/).
+This serverless plug-in provides scaffolding around a Magento-connected micro service.
 
-rsync -a /home/john.smith/Development/microservices/serverless-magento/ ./node_modules/@aligent/serverless-magento/
+## YAML Definition
+Add the following (with correct values) to your `serverless.yml` file:
 
-## Implementing your plugin
+```
+custom:
+  magento:
+    baseUrl: 'http://localhost'
+    name: 'Test Service'
+    serviceId: '123'
+    integrationId: '123'
+    adminInterfaces: ['http://localhost']
+```
+ ## Variables
 
-When developing your plugin, please refer to the following sources:
-
-- [Plugins Documentation](https://www.serverless.com/framework/docs/providers/aws/guide/plugins/)
-- [Blog - How to create serverless plugins - Part 1](https://serverless.com/blog/writing-serverless-plugins/)
-- [Blog - How to create serverless plugins - Part 2](https://serverless.com/blog/writing-serverless-plugins-2/)
-
-## Sharing your plugin
-
-After implementing your plugin, you might consider sharing it with a wider audience. You might do it by adding it to `Community Contributed Plugins` in official [plugins repository](https://github.com/serverless/plugins).
+ | Variable              | Usage                                                       |
+ | --------------------- | ----------------------------------------------------------- |
+ | baseUrl               |  The base URL - including scheme - of the Magento instance.|
+ | name     			 |  The friendly name of the service.|
+ | serviceId             |  The service ID.|
+ | integrationId         |  The Integration ID|
+ | adminInterfaces       |  An array of strings representing the URLs of all admin interfaces to be exposed by Magento|
