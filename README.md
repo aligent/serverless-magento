@@ -1,7 +1,7 @@
 # Serverless Magento Plugin
 
 This serverless plugin provides scaffolding around a Magento-connected micro service.
-It's main responsibility is registering the service with a Magento instance and provide that authorization 
+It's main responsibility is registering the service with a Magento instance and injecting that authorization 
 context into each function in the service.
 
 The registration happens as part of the serverless deploy. If for any reason the registration is not able to take place, the deployment will fail (before any changeset has been deployed).
