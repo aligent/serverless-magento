@@ -28,7 +28,7 @@ class ServerlessMagento {
           this.adminInterfaces = this.variables['adminInterfaces']
 
           this.hooks = {
-               'deploy:compileEvents': this.createDeploymentArtifacts.bind(this),
+               'before:package:compileFunctions': this.createDeploymentArtifacts.bind(this),
           };
      }
 
@@ -85,7 +85,7 @@ class ServerlessMagento {
           return register(this.baseUrl, 1, registrationRequest)
           .then ((res) => {
                if (res.success == true) {
-                    this.serverless.cli.log(chalk.gree('Magento service registration successful'));
+                    this.serverless.cli.log(chalk.green('Magento service registration successful'));
                } else {
                     this.serverless.cli.log(chalk.red('Magento service registration failed'));
                     throw new Error('Unknown registration error. Magento returned failure message.');
@@ -95,14 +95,16 @@ class ServerlessMagento {
      }
 
      injectServiceContext(registrationResponse: RegistratonResponse)  {
+          this.serverless.cli.log(`Injecting Magento service context into functions`);
+
           this.serverless.service.getAllFunctions().forEach((functionName) => {
                const functionObj = this.serverless.service.getFunction(functionName);
                if (functionObj.environment == null) {
                     functionObj.environment = {};
-               } else {
-                    functionObj.environment.MAGENTO_ACCESS_TOKEN=registrationResponse.access_token;
-                    functionObj.environment.MAGENTO_SERVICE_ID=registrationResponse.service_id;
                }
+
+               functionObj.environment.MAGENTO_ACCESS_TOKEN=registrationResponse.access_token;
+               functionObj.environment.MAGENTO_SERVICE_ID=registrationResponse.service_id;
           });
      }
 
