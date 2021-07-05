@@ -17,8 +17,6 @@ class ServerlessMagento {
      integrationId: string
      adminInterfaces: string[]
 
-
-
      constructor(serverless: Serverless, options: Options) {
           this.serverless = serverless;
           this.options = options;
@@ -30,7 +28,7 @@ class ServerlessMagento {
           this.adminInterfaces = this.variables['adminInterfaces']
 
           this.hooks = {
-               'before:deploy:createDeploymentArtifacts': this.createDeploymentArtifacts.bind(this),
+               'deploy:compileEvents': this.createDeploymentArtifacts.bind(this),
           };
      }
 
@@ -97,7 +95,15 @@ class ServerlessMagento {
      }
 
      injectServiceContext(registrationResponse: RegistratonResponse)  {
-          throw new Error('injectServiceContext Not yet implemented');
+          this.serverless.service.getAllFunctions().forEach((functionName) => {
+               const functionObj = this.serverless.service.getFunction(functionName);
+               if (functionObj.environment == null) {
+                    functionObj.environment = {};
+               } else {
+                    functionObj.environment.MAGENTO_ACCESS_TOKEN=registrationResponse.access_token;
+                    functionObj.environment.MAGENTO_SERVICE_ID=registrationResponse.service_id;
+               }
+          });
      }
 
 }
