@@ -1,8 +1,9 @@
 import Serverless = require("serverless");
 import { Options } from "serverless";
-import { register, RegistrationRequest, RegistratonResponse } from './lib/magento'
+import { register, RegistrationRequest, RegistratonResponse, AdminConfiguration } from './lib/magento'
 const chalk = require('chalk');
 import axios from 'axios';
+import { AxiosError } from 'axios';
 import 'source-map-support/register';
 
 class ServerlessMagento {
@@ -15,7 +16,7 @@ class ServerlessMagento {
      baseUrl: string
      serviceId: string
      integrationId: string
-     adminInterfaces: string[]
+     adminInterfaces: AdminConfiguration[]
 
      constructor(serverless: Serverless, options: Options) {
           this.serverless = serverless;
@@ -48,7 +49,6 @@ class ServerlessMagento {
                'baseUrl': this.baseUrl,
                'serviceId': this.serviceId,
                'integrationId': this.integrationId,
-               'adminInterfaces': this.adminInterfaces
           }
 
           Object.entries(configValues).forEach(entry => {
@@ -60,9 +60,10 @@ class ServerlessMagento {
                }
           });
 
+
           if (!Array.isArray(this.adminInterfaces)) {
                this.serverless.cli.log(chalk.red(`Invalid service configuration.`));
-               this.serverless.cli.log(chalk.red(`adminInterfaces should be an array of urls.`));
+               this.serverless.cli.log(chalk.red(`adminInterfaces should be an array of AdminConfigurations.`));
                valid = false;
           }
 
@@ -73,6 +74,7 @@ class ServerlessMagento {
 
      performServiceRegistration(): Promise<RegistratonResponse> {
           this.serverless.cli.log(`Registering service with Magento application`);
+
 
           const registrationRequest = {
                service_id: this.serviceId,
@@ -91,6 +93,13 @@ class ServerlessMagento {
                     throw new Error('Unknown registration error. Magento returned failure message.');
                }
                return res
+          }).catch((err: AxiosError) => {
+               this.serverless.cli.log(chalk.red('Magento service registration failed'));
+               if (err.response?.data !== null) {
+                    this.serverless.cli.log(chalk.red("Received registration error:"));
+                    this.serverless.cli.log(chalk.red(JSON.stringify(err.response!.data)));
+               }
+               throw err;
           });
      }
 

@@ -8,10 +8,16 @@ axiosRetry(axios, {
   retryCondition: (_error: any) => true // retry no matter what
 });
 
+
+export interface AdminConfiguration {
+     name: string,
+     app_url: string,
+}
+
 export interface RegistrationRequest {
      service_id: string,
      name: string,
-     admin_interfaces: string[],
+     admin_interfaces: AdminConfiguration[],
      integration_id: string
 }
 
@@ -27,7 +33,7 @@ const headers = {
 };
 
 export const register = (baseUrl: string, apiVersion: number, data: RegistrationRequest): Promise<RegistratonResponse> => {
-     const registrationURL = `${baseUrl}/v${apiVersion}/service/register`;
-     return  axios.post(registrationURL, data, {headers: headers, timeout: 3000})
+     const registrationURL = `${baseUrl}/rest/V${apiVersion}/service/register`;
+     return  axios.post(registrationURL, {service: data}, {headers: headers, timeout: 3000})
      .then((res) => {return res.data});
 }
