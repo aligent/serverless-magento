@@ -14,8 +14,6 @@ class ServerlessMagento {
      variables: { [key: string]: any }
      serviceName: string
      baseUrl: string
-     serviceId: string
-     integrationId: string
      adminInterfaces: AdminConfiguration[]
 
      constructor(serverless: Serverless, options: Options) {
@@ -24,8 +22,6 @@ class ServerlessMagento {
           this.variables = serverless.service.custom['magento'];
           this.serviceName = this.variables['name']
           this.baseUrl = this.variables['baseUrl']
-          this.serviceId= this.variables['serviceId']
-          this.integrationId = this.variables['integrationId']
           this.adminInterfaces = this.variables['adminInterfaces']
 
           this.hooks = {
@@ -47,8 +43,6 @@ class ServerlessMagento {
           const configValues = {
                'serviceName': this.serviceName,
                'baseUrl': this.baseUrl,
-               'serviceId': this.serviceId,
-               'integrationId': this.integrationId,
           }
 
           Object.entries(configValues).forEach(entry => {
@@ -77,10 +71,8 @@ class ServerlessMagento {
 
 
           const registrationRequest = {
-               service_id: this.serviceId,
                name: this.serviceName,
                admin_interfaces: this.adminInterfaces,
-               integration_id: this.integrationId
           } as RegistrationRequest;
 
 
@@ -95,7 +87,7 @@ class ServerlessMagento {
                return res
           }).catch((err: AxiosError) => {
                this.serverless.cli.log(chalk.red('Magento service registration failed'));
-               if (err.response?.data !== null) {
+               if (err.response?.data != null) {
                     this.serverless.cli.log(chalk.red("Received registration error:"));
                     this.serverless.cli.log(chalk.red(JSON.stringify(err.response!.data)));
                }
