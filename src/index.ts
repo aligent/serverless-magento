@@ -2,19 +2,28 @@ import Serverless = require("serverless");
 import { Options } from "serverless";
 import { register, RegistrationRequest, RegistratonResponse, AdminConfiguration } from './lib/magento'
 const chalk = require('chalk');
-import axios from 'axios';
 import { AxiosError } from 'axios';
+import path = require('path');
+import {addActivatorFunctionRoleToResources,
+     addActivatorFunctionToService,
+     createActivatorFunctionArtifact} from './lib/activator'
+import fs  = require('fs/promises');
 import 'source-map-support/register';
+
+const ACTIVATOR_FUNCTION_DIR='activator';
 
 class ServerlessMagento {
      serverless: Serverless;
      options: any;
 
      hooks: { [key: string]: Function }
+
      variables: { [key: string]: any }
      serviceName: string
      baseUrl: string
      adminInterfaces: AdminConfiguration[]
+     serviceDir: string
+     handlerFolder: string
 
      constructor(serverless: Serverless, options: Options) {
           this.serverless = serverless;
@@ -25,17 +34,17 @@ class ServerlessMagento {
           this.adminInterfaces = this.variables['adminInterfaces']
 
           this.hooks = {
-               'before:package:compileFunctions': this.createDeploymentArtifacts.bind(this),
+               'after:package:initialize': this.initialize.bind(this),
+               'after:package:createDeploymentArtifacts': this.cleanupTempDir.bind(this)
           };
+
+          this.serviceDir = this.serverless.config.servicePath || '';
+          this.handlerFolder = path.join(this.serviceDir, ACTIVATOR_FUNCTION_DIR);
      }
 
-     async createDeploymentArtifacts() {
-          this.validateConfig();
-          await this.performServiceRegistration()
-          .then((res: RegistratonResponse) => {
-               return this.injectServiceContext(res);
-          });
-
+     async initialize() {
+          await this.validateConfig();
+          await this.configureActivator();
      }
 
      validateConfig() {
@@ -104,12 +113,49 @@ class ServerlessMagento {
                     functionObj.environment = {};
                }
 
-               functionObj.environment.MAGENTO_ACCESS_TOKEN=registrationResponse.access_token;
-               functionObj.environment.MAGENTO_SERVICE_ID=registrationResponse.service_id;
+               //functionObj.environment.MAGENTO_ACCESS_TOKEN=registrationResponse.access_token;
+               //functionObj.environment.MAGENTO_SERVICE_ID=registrationResponse.service_id;
           });
      }
 
+
+     cleanupTempDir = async () => {
+          try {
+               await fs.rm(
+                    this.handlerFolder,
+                    { recursive: true },
+               );
+          } catch (err) {
+               if (err.code !== 'ENOENT') {
+                    this.serverless.cli.log(`Couldn't clean up temporary directory ${this.handlerFolder}.`);
+               }
+          }
+     }
+
+     configureActivator = async () => {
+
+          const activatorConfig = {
+               pathHandler: path.join('activator', 'index.warmUp'),
+               memorySize: 128,
+               events: [{ schedule: 'rate(5 minutes)' }],
+               timeout: 20,
+          };
+
+          await createActivatorFunctionArtifact(
+               this.serverless.service.provider.region,
+               this.handlerFolder
+          );
+
+          addActivatorFunctionRoleToResources(
+               this.serverless.service
+          );
+
+          addActivatorFunctionToService(this.serverless.service, activatorConfig);
+     }
+
+
 }
+
 
 module.exports = ServerlessMagento;
 
