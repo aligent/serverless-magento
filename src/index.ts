@@ -19,7 +19,7 @@ class ServerlessMagento {
      hooks: { [key: string]: Function }
 
      variables: { [key: string]: any }
-     serviceName: string
+     magentoServiceName: string
      baseUrl: string
      adminInterfaces: AdminConfiguration[]
      serviceDir: string
@@ -29,7 +29,7 @@ class ServerlessMagento {
           this.serverless = serverless;
           this.options = options;
           this.variables = serverless.service.custom['magento'];
-          this.serviceName = this.variables['name']
+          this.magentoServiceName = this.variables['name']
           this.baseUrl = this.variables['baseUrl']
           this.adminInterfaces = this.variables['adminInterfaces']
 
@@ -43,14 +43,14 @@ class ServerlessMagento {
      }
 
      async initialize() {
-          await this.validateConfig();
-          await this.configureActivator();
+          this.validateConfig();
+          await this.buildActivatorFunction();
      }
 
      validateConfig() {
           var valid = true
           const configValues = {
-               'serviceName': this.serviceName,
+               'serviceName': this.magentoServiceName,
                'baseUrl': this.baseUrl,
           }
 
@@ -80,21 +80,13 @@ class ServerlessMagento {
 
 
           const registrationRequest = {
-               name: this.serviceName,
+               name: this.magentoServiceName,
                admin_interfaces: this.adminInterfaces,
           } as RegistrationRequest;
 
 
           return register(this.baseUrl, 1, registrationRequest)
-          .then ((res) => {
-               if (res.success == true) {
-                    this.serverless.cli.log(chalk.green('Magento service registration successful'));
-               } else {
-                    this.serverless.cli.log(chalk.red('Magento service registration failed'));
-                    throw new Error('Unknown registration error. Magento returned failure message.');
-               }
-               return res
-          }).catch((err: AxiosError) => {
+          .catch((err: AxiosError) => {
                this.serverless.cli.log(chalk.red('Magento service registration failed'));
                if (err.response?.data != null) {
                     this.serverless.cli.log(chalk.red("Received registration error:"));
@@ -112,9 +104,6 @@ class ServerlessMagento {
                if (functionObj.environment == null) {
                     functionObj.environment = {};
                }
-
-               //functionObj.environment.MAGENTO_ACCESS_TOKEN=registrationResponse.access_token;
-               //functionObj.environment.MAGENTO_SERVICE_ID=registrationResponse.service_id;
           });
      }
 
@@ -132,10 +121,15 @@ class ServerlessMagento {
           }
      }
 
-     configureActivator = async () => {
-
+     /**
+      * Packages and injects a activator function and associated
+      * resources into stack.
+      */
+     buildActivatorFunction = async () => {
           const activatorConfig = {
-               pathHandler: path.join('activator', 'index.warmUp'),
+               serviceName: this.serverless.service.service,
+               serviceStage: this.serverless.service.provider.stage,
+               pathHandler: path.join('activator', 'index.activate'),
                memorySize: 128,
                events: [{ schedule: 'rate(5 minutes)' }],
                timeout: 20,
