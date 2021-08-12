@@ -15,16 +15,22 @@ export interface AdminConfiguration {
 }
 
 export interface RegistrationRequest {
-     service_id: string,
      name: string,
-     admin_interfaces: AdminConfiguration[],
-     integration_id: string
 }
 
 export interface RegistratonResponse {
-     success: boolean,
+     name: string,
      service_id: string,
-     access_token: string
+     registration_token: string
+}
+
+export interface RegistratonStatusResponse {
+     name: string,
+     status: string
+}
+
+export interface ActivationResponse {
+     magento_access_token: string
 }
 
 const headers = {
@@ -33,7 +39,19 @@ const headers = {
 };
 
 export const register = (baseUrl: string, apiVersion: number, data: RegistrationRequest): Promise<RegistratonResponse> => {
-     const registrationURL = `${baseUrl}/rest/V${apiVersion}/service/register`;
-     return  axios.post(registrationURL, {service: data}, {headers: headers, timeout: 3000})
+     const registrationURL = `${baseUrl}/rest/V${apiVersion}/service/registration`;
+     return  axios.post(registrationURL, data, {headers: headers, timeout: 3000})
+     .then((res) => {return res.data});
+}
+
+export const getRegistrationStatus = (baseUrl: string, apiVersion: number, serviceId: number): Promise<RegistratonStatusResponse> => {
+     const registrationURL = `${baseUrl}/rest/V${apiVersion}/service/${serviceId}/registration`;
+     return  axios.get(registrationURL, {headers: headers, timeout: 3000})
+     .then((res) => {return res.data});
+}
+
+export const activateRegistration = (baseUrl: string, apiVersion: number, serviceId: number, regisrationToken: String): Promise<ActivationResponse> => {
+     const registrationURL = `${baseUrl}/rest/V${apiVersion}/service/${serviceId}/activation`;
+     return  axios.post(registrationURL, {headers: headers, timeout: 3000})
      .then((res) => {return res.data});
 }
