@@ -37,8 +37,6 @@ class ServerlessMagento {
           this.magentoServiceName = this.variables['name']
           this.baseUrl = this.variables['baseUrl']
           this.adminInterfaces = this.variables['adminInterfaces']
-          this.provider = this.serverless.getProvider('aws');
-          this.region = this.serverless.service.provider.region;
 
           this.hooks = {
                'after:package:initialize': this.initialize.bind(this),
@@ -51,6 +49,8 @@ class ServerlessMagento {
 
      async initialize() {
           // Initialize AWS SDK clients
+          this.provider = this.serverless.getProvider('aws');
+          this.region = this.serverless.service.provider.region;
           const credentials = this.provider.getCredentials(); 
           const credentialsWithRegion = { ...credentials, region: this.region };
           this.ssm = new this.provider.sdk.SSM(credentialsWithRegion);
@@ -62,9 +62,10 @@ class ServerlessMagento {
           } else {
                await this.performServiceRegistration()
                .then(this.writeRegistrationSSMParams)
-               .then(this.buildActivatorFunction);
                //TODO: Deregister if failure
           }
+
+          await this.buildActivatorFunction();
      }
 
      validateConfig() {
@@ -205,7 +206,7 @@ class ServerlessMagento {
           };
 
           await createActivatorFunctionArtifact(
-               this.region,
+               this.serverless.service.provider.region,
                this.handlerFolder
           );
 
@@ -215,8 +216,6 @@ class ServerlessMagento {
 
           addActivatorFunctionToService(this.serverless.service, activatorConfig);
      }
-
-
 }
 
 
