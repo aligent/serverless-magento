@@ -1,5 +1,6 @@
 import Serverless = require("serverless");
 import { Options } from "serverless";
+import { SSM } from 'aws-sdk';
 import { register, RegistrationRequest, RegistratonResponse, AdminConfiguration } from './lib/magento'
 const chalk = require('chalk');
 import { AxiosError } from 'axios';
@@ -13,8 +14,12 @@ import 'source-map-support/register';
 const ACTIVATOR_FUNCTION_DIR='activator';
 
 class ServerlessMagento {
+     private ssm: SSM;
+
      serverless: Serverless;
      options: any;
+     provider: any;
+     region: string;
 
      hooks: { [key: string]: Function }
 
@@ -32,6 +37,8 @@ class ServerlessMagento {
           this.magentoServiceName = this.variables['name']
           this.baseUrl = this.variables['baseUrl']
           this.adminInterfaces = this.variables['adminInterfaces']
+          this.provider = this.serverless.getProvider('aws');
+          this.region = this.serverless.service.provider.region;
 
           this.hooks = {
                'after:package:initialize': this.initialize.bind(this),
@@ -43,8 +50,18 @@ class ServerlessMagento {
      }
 
      async initialize() {
+          // Initialize AWS SDK clients
+          const credentials = this.provider.getCredentials(); 
+          const credentialsWithRegion = { ...credentials, region: this.region };
+          this.ssm = new this.provider.sdk.SSM(credentialsWithRegion);
+
           this.validateConfig();
-          await this.buildActivatorFunction();
+ 
+          // TODO: Test for existing registration
+          this.performServiceRegistration()
+          .then(this.writeRegistrationSSMParams)
+          .then(this.buildActivatorFunction);
+          //TODO: Deregister if failure
      }
 
      validateConfig() {
@@ -75,15 +92,16 @@ class ServerlessMagento {
           }
      }
 
+     /**
+      * Perform a registration request against the Magento instance
+      */
      performServiceRegistration(): Promise<RegistratonResponse> {
           this.serverless.cli.log(`Registering service with Magento application`);
-
 
           const registrationRequest = {
                name: this.magentoServiceName,
                admin_interfaces: this.adminInterfaces,
           } as RegistrationRequest;
-
 
           return register(this.baseUrl, 1, registrationRequest)
           .catch((err: AxiosError) => {
@@ -94,19 +112,53 @@ class ServerlessMagento {
                }
                throw err;
           });
+
      }
 
-     injectServiceContext(registrationResponse: RegistratonResponse)  {
-          this.serverless.cli.log(`Injecting Magento service context into functions`);
+     /**
+      * Writes Magento service registration information to SSM.
+     */
+     writeRegistrationSSMParams = (registration: RegistratonResponse): Promise<SSM.PutParameterResult[]>  => {
+          this.serverless.cli.log(`Writing service context to SSM`);
+          const SSM_PREFIX = `/${this.serverless.service.service}/${this.serverless.service.provider.stage}/magento`
 
-          this.serverless.service.getAllFunctions().forEach((functionName) => {
-               const functionObj = this.serverless.service.getFunction(functionName);
-               if (functionObj.environment == null) {
-                    functionObj.environment = {};
-               }
-          });
+          return Promise.all(
+          [
+               // Write Magento URL to SSM
+               this.ssm.putParameter(
+               {
+                    Name: `${SSM_PREFIX}/url`,
+                    Description: 'Written by @aligent/serverless-magento',
+                    Value: this.baseUrl,
+                    Type: 'String'
+               }).promise(),
+               // Write serviceId to SSM
+               this.ssm.putParameter(
+               {
+                    Name: `${SSM_PREFIX}/service_name`,
+                    Description: 'Written by @aligent/serverless-magento',
+                    Value: registration.name,
+                    Type: 'String'
+               }).promise(),
+               // Write serviceId to SSM
+               this.ssm.putParameter(
+               {
+                    Name: `${SSM_PREFIX}/service_id`,
+                    Description: 'Written by @aligent/serverless-magento',
+                    Value: registration.service_id.toString(),
+                    Type: 'String'
+               }).promise(),
+               this.ssm.putParameter(
+               {
+                    Name: `${SSM_PREFIX}/registration_token`,
+                    Description: 'Written by @aligent/serverless-magento',
+                    Value: registration.registration_token,
+                    Type: 'SecureString'
+               }).promise()
+          ]);
+
+          
      }
-
 
      cleanupTempDir = async () => {
           try {
@@ -136,7 +188,7 @@ class ServerlessMagento {
           };
 
           await createActivatorFunctionArtifact(
-               this.serverless.service.provider.region,
+               this.region,
                this.handlerFolder
           );
 
