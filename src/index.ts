@@ -1,6 +1,6 @@
 import Serverless = require("serverless");
 import { Options } from "serverless";
-import { SSM } from 'aws-sdk';
+import { SSM, AWSError} from 'aws-sdk';
 import { register, RegistrationRequest, RegistratonResponse, AdminConfiguration } from './lib/magento'
 const chalk = require('chalk');
 import { AxiosError } from 'axios';
@@ -57,11 +57,14 @@ class ServerlessMagento {
 
           this.validateConfig();
  
-          // TODO: Test for existing registration
-          this.performServiceRegistration()
-          .then(this.writeRegistrationSSMParams)
-          .then(this.buildActivatorFunction);
-          //TODO: Deregister if failure
+          if (await this.serviceParamsPresent()) {
+               this.serverless.cli.log(`Service already registered. Skipping registration.`);
+          } else {
+               await this.performServiceRegistration()
+               .then(this.writeRegistrationSSMParams)
+               .then(this.buildActivatorFunction);
+               //TODO: Deregister if failure
+          }
      }
 
      validateConfig() {
@@ -113,6 +116,20 @@ class ServerlessMagento {
                throw err;
           });
 
+     }
+
+     /**
+      * Tests for the presence of a registration token SSM param indicating 
+      */
+     serviceParamsPresent = (): Promise<boolean> => {
+          const SSM_PREFIX = `/${this.serverless.service.service}/${this.serverless.service.provider.stage}/magento`
+
+          return this.ssm.getParameters({
+               Names: [`${SSM_PREFIX}/registration_token`]
+          }).promise()
+          .then((res) => {
+               return (res.Parameters?.length ?? 0) == 1
+          });
      }
 
      /**
