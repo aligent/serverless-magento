@@ -209,7 +209,10 @@ class ServerlessMagento {
           await createActivatorFunctionArtifact(
                this.serverless.service.provider.region,
                this.handlerFolder,
-               this.ssmPrefix
+               this.ssmPrefix,
+               this.adminInterfaces[0].name,
+               this.adminInterfaces[0].app_url,
+               'TEST KEY',
           );
 
           addActivatorFunctionRoleToResources(
