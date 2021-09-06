@@ -29,6 +29,7 @@ class ServerlessMagento {
      adminInterfaces: AdminConfiguration[]
      serviceDir: string
      handlerFolder: string
+     ssmPrefix: string
 
      constructor(serverless: Serverless, options: Options) {
           this.serverless = serverless;
@@ -45,6 +46,7 @@ class ServerlessMagento {
 
           this.serviceDir = this.serverless.config.servicePath || '';
           this.handlerFolder = path.join(this.serviceDir, ACTIVATOR_FUNCTION_DIR);
+          this.ssmPrefix = `/${this.serverless.service.service}/${this.serverless.service.provider.stage}/magento`;
      }
 
      async initialize() {
@@ -123,10 +125,9 @@ class ServerlessMagento {
       * Tests for the presence of a registration token SSM param indicating 
       */
      serviceParamsPresent = (): Promise<boolean> => {
-          const SSM_PREFIX = `/${this.serverless.service.service}/${this.serverless.service.provider.stage}/magento`
 
           return this.ssm.getParameters({
-               Names: [`${SSM_PREFIX}/registration_token`]
+               Names: [`${this.ssmPrefix}/registration_token`]
           }).promise()
           .then((res) => {
                return (res.Parameters?.length ?? 0) == 1
@@ -138,14 +139,13 @@ class ServerlessMagento {
      */
      writeRegistrationSSMParams = (registration: RegistratonResponse): Promise<SSM.PutParameterResult[]>  => {
           this.serverless.cli.log(`Writing service context to SSM`);
-          const SSM_PREFIX = `/${this.serverless.service.service}/${this.serverless.service.provider.stage}/magento`
 
           return Promise.all(
           [
                // Write Magento URL to SSM
                this.ssm.putParameter(
                {
-                    Name: `${SSM_PREFIX}/url`,
+                    Name: `${this.ssmPrefix}/url`,
                     Description: 'Written by @aligent/serverless-magento',
                     Value: this.baseUrl,
                     Type: 'String'
@@ -153,7 +153,7 @@ class ServerlessMagento {
                // Write serviceId to SSM
                this.ssm.putParameter(
                {
-                    Name: `${SSM_PREFIX}/service_name`,
+                    Name: `${this.ssmPrefix}/service_name`,
                     Description: 'Written by @aligent/serverless-magento',
                     Value: registration.name,
                     Type: 'String'
@@ -161,14 +161,14 @@ class ServerlessMagento {
                // Write serviceId to SSM
                this.ssm.putParameter(
                {
-                    Name: `${SSM_PREFIX}/service_id`,
+                    Name: `${this.ssmPrefix}/service_id`,
                     Description: 'Written by @aligent/serverless-magento',
                     Value: registration.service_id.toString(),
                     Type: 'String'
                }).promise(),
                this.ssm.putParameter(
                {
-                    Name: `${SSM_PREFIX}/registration_token`,
+                    Name: `${this.ssmPrefix}/registration_token`,
                     Description: 'Written by @aligent/serverless-magento',
                     Value: registration.registration_token,
                     Type: 'SecureString'
@@ -203,15 +203,18 @@ class ServerlessMagento {
                memorySize: 128,
                events: [{ schedule: 'rate(5 minutes)' }],
                timeout: 20,
+               role: 'ServerlessMagentoActivatorPluginRole'
           };
 
           await createActivatorFunctionArtifact(
                this.serverless.service.provider.region,
-               this.handlerFolder
+               this.handlerFolder,
+               this.ssmPrefix
           );
 
           addActivatorFunctionRoleToResources(
-               this.serverless.service
+               this.serverless.service,
+               this.ssmPrefix
           );
 
           addActivatorFunctionToService(this.serverless.service, activatorConfig);
