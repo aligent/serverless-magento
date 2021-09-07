@@ -12,6 +12,8 @@ axiosRetry(axios, {
 export interface AdminConfiguration {
      name: string,
      app_url: string,
+     context_source?: "APIGateway" | "Custom"
+     custom_context?: string
 }
 
 export interface RegistrationRequest {

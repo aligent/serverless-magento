@@ -212,7 +212,7 @@ class ServerlessMagento {
                this.handlerFolder,
                this.ssmPrefix,
                this.adminInterfaces[0].name,
-               this.adminInterfaces[0].app_url,
+               this.adminInterfaces[0].app_url
           );
 
           addActivatorFunctionRoleToResources(
@@ -224,54 +224,69 @@ class ServerlessMagento {
      }
 
      injectInterfaceContext = async () => {
-          this.serverless.cli.log(`Writing APIGateway context to SSM`);
 
-          const apiGatewayKey = await this.provider
-          .request('CloudFormation', 'describeStackResources', {
-               StackName: this.provider.naming.getStackName(),
-          })
-          .then((resources: any) => {
-               const apiKeys = resources.StackResources
-               .filter((resource: any) => resource.ResourceType === 'AWS::ApiGateway::ApiKey')
-               .map((resource: any) => resource.PhysicalResourceId)
+          const contextSource = this.adminInterfaces[0].context_source;
+          const customContext = this.adminInterfaces[0].custom_context;
+          let interfaceContext = "";
 
-               if (apiKeys.length > 1) {
-                    throw new Error('Multiple APIGateway keys not supported');
-               }
-               const keyId = apiKeys.pop();
+          if (contextSource == "APIGateway") {
+               this.serverless.cli.log(`Writing APIGateway context to SSM`);
 
-               return this.provider.request('APIGateway', 'getApiKey', {
-                    apiKey: keyId,
-                    includeValue: true,
+               const apiGatewayKey = await this.provider
+               .request('CloudFormation', 'describeStackResources', {
+                    StackName: this.provider.naming.getStackName(),
+               })
+               .then((resources: any) => {
+                    const apiKeys = resources.StackResources
+                    .filter((resource: any) => resource.ResourceType === 'AWS::ApiGateway::ApiKey')
+                    .map((resource: any) => resource.PhysicalResourceId)
+
+                    if (apiKeys.length > 1) {
+                         throw new Error('Multiple APIGateway keys not supported');
+                    }
+                    const keyId = apiKeys.pop();
+
+                    return this.provider.request('APIGateway', 'getApiKey', {
+                         apiKey: keyId,
+                         includeValue: true,
+                    });
+               })
+               .then((apiKeys: any) => {
+                    return apiKeys.value;
                });
-          })
-          .then((apiKeys: any) => {
-               return apiKeys.value;
-          });
 
-          const apiGatewayBaseUrl = await this.provider
-          .request('CloudFormation', 'describeStackResources', {
-               StackName: this.provider.naming.getStackName(),
-          })
-          .then((resources: any) => {
-               const apiRestApis = resources.StackResources
-               .filter((resource: any) => resource.ResourceType === 'AWS::ApiGateway::RestApi')
-               .map((resource: any) => resource.PhysicalResourceId)
+               const apiGatewayBaseUrl = await this.provider
+               .request('CloudFormation', 'describeStackResources', {
+                    StackName: this.provider.naming.getStackName(),
+               })
+               .then((resources: any) => {
+                    const apiRestApis = resources.StackResources
+                    .filter((resource: any) => resource.ResourceType === 'AWS::ApiGateway::RestApi')
+                    .map((resource: any) => resource.PhysicalResourceId)
 
-               if (apiRestApis.length > 1) {
-                    throw new Error('Multiple APIGatewayRestApis not supported');
-               } else if (apiRestApis.length == 0) {
-                    throw new Error('Multiple APIGatewayRestApis');
+                    if (apiRestApis.length > 1) {
+                         throw new Error('Multiple APIGatewayRestApis not supported');
+                    } else if (apiRestApis.length == 0) {
+                         throw new Error('Multiple APIGatewayRestApis');
+                    }
+
+                    const restApiId = apiRestApis.pop();
+                    return `https://${restApiId}.execute-api.ap-southeast-2.amazonaws.com/${this.serverless.service.provider.stage}/`
+               });
+                    interfaceContext = JSON.stringify({apiBasePath: apiGatewayBaseUrl, apiKey: apiGatewayKey});
+          } else if (contextSource == "Custom") {
+               this.serverless.cli.log(`Writing custom context to SSM`);
+               if (!customContext) {
+                    throw new Error('No custom interface context provided');
+               } else {
+                    interfaceContext = customContext;
                }
-
-               const restApiId = apiRestApis.pop();
-               return `https://${restApiId}.execute-api.ap-southeast-2.amazonaws.com/${this.serverless.service.provider.stage}/`
-          });
+          }
 
           await this.ssm.putParameter({
                Name: `${this.ssmPrefix}/interface_context`,
                Description: 'Written by @aligent/serverless-magento',
-               Value: JSON.stringify({apiBasePath: apiGatewayBaseUrl, apiKey: apiGatewayKey}),
+               Value: interfaceContext,
                Type: 'SecureString'
           }).promise();
 
