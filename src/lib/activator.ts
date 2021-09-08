@@ -182,9 +182,9 @@ export async function createActivatorFunctionArtifact(region: string,
 
                     let interfaceContext = "";
                     try {
-                         (await ssm.getParameter({
+                         interfaceContext = (await ssm.getParameter({
                               Name: '${ssmPrefix}/interface_context',
-                              WithDecryption: false
+                              WithDecryption: true
                          }).promise()).Parameter.Value;
                     } catch {
                          console.debug('No interface context available');
@@ -219,12 +219,12 @@ export async function createActivatorFunctionArtifact(region: string,
 }
 
 export function addActivatorFunctionToService(service: any, activatorConfig: any) {
-     service.functions['magentoServerlessActivator'] = {
+     service.functions['magentoServerlessActivator1'] = {
           description: `Scheduled function which ensures the Magento integration  context is fresh`,
           events: activatorConfig.events,
           handler: activatorConfig.pathHandler.split(path.sep).join(path.posix.sep),
           memorySize: activatorConfig.memorySize,
-          name: `${activatorConfig.serviceName}-${activatorConfig.serviceStage}-magentoServerlessActivator`,
+          name: `${activatorConfig.serviceName}-${activatorConfig.serviceStage}-magentoServerlessActivator1`,
     runtime: 'nodejs14.x',
     package: activatorConfig.package,
     timeout: activatorConfig.timeout,
