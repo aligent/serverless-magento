@@ -265,7 +265,7 @@ class ServerlessMagento {
                }
 
                const restApiId = apiRestApis.pop();
-               return `https://${restApiId}.execute-api.ap-southeast-2.amazonaws.com/${this.serverless.service.provider.stage}/`
+               return `https://${restApiId}.execute-api.${this.region}.amazonaws.com/${this.serverless.service.provider.stage}/`
           });
 
           await this.ssm.putParameter({
