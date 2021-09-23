@@ -14,12 +14,12 @@ import 'source-map-support/register';
 const ACTIVATOR_FUNCTION_DIR='activator';
 
 class ServerlessMagento {
-     private ssm: SSM;
+     private ssm?: SSM;
 
      serverless: Serverless;
      options: any;
      provider: any;
-     region: string;
+     region?: string;
 
      hooks: { [key: string]: Function }
 
@@ -127,7 +127,7 @@ class ServerlessMagento {
       */
      serviceParamsPresent = (): Promise<boolean> => {
 
-          return this.ssm.getParameters({
+          return this.ssm!.getParameters({
                Names: [`${this.ssmPrefix}/registration_token`]
           }).promise()
           .then((res) => {
@@ -144,7 +144,7 @@ class ServerlessMagento {
           return Promise.all(
           [
                // Write Magento URL to SSM
-               this.ssm.putParameter(
+               this.ssm!.putParameter(
                {
                     Name: `${this.ssmPrefix}/url`,
                     Description: 'Written by @aligent/serverless-magento',
@@ -152,7 +152,7 @@ class ServerlessMagento {
                     Type: 'String'
                }).promise(),
                // Write serviceId to SSM
-               this.ssm.putParameter(
+               this.ssm!.putParameter(
                {
                     Name: `${this.ssmPrefix}/service_name`,
                     Description: 'Written by @aligent/serverless-magento',
@@ -160,14 +160,14 @@ class ServerlessMagento {
                     Type: 'String'
                }).promise(),
                // Write serviceId to SSM
-               this.ssm.putParameter(
+               this.ssm!.putParameter(
                {
                     Name: `${this.ssmPrefix}/service_id`,
                     Description: 'Written by @aligent/serverless-magento',
                     Value: registration.service_id.toString(),
                     Type: 'String'
                }).promise(),
-               this.ssm.putParameter(
+               this.ssm!.putParameter(
                {
                     Name: `${this.ssmPrefix}/registration_token`,
                     Description: 'Written by @aligent/serverless-magento',
@@ -268,7 +268,7 @@ class ServerlessMagento {
                return `https://${restApiId}.execute-api.${this.region}.amazonaws.com/${this.serverless.service.provider.stage}/`
           });
 
-          await this.ssm.putParameter({
+          await this.ssm!.putParameter({
                Name: `${this.ssmPrefix}/interface_context`,
                Description: 'Written by @aligent/serverless-magento',
                Value: JSON.stringify({apiBasePath: apiGatewayBaseUrl, apiKey: apiGatewayKey}),
