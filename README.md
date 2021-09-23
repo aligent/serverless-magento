@@ -16,6 +16,8 @@ The Serverless plugin will initially register with the [magento2-microservice-co
 
 An "activator" Lambda function will be deployed along with the Serverless application which repeatedly checks if the service has been "activated" within Magento. Once this is done, any provided admin interface is created and the Magento access token is retrieved and stored within SSM for use by the application.
 
+![serverless output](/images/serverless_output.png)
+
 
 ## Serverless configuration
 The plugin is configured within the `serverless.yaml` by providing configuration values.
