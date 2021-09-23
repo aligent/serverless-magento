@@ -185,7 +185,7 @@ class ServerlessMagento {
                     this.handlerFolder,
                     { recursive: true },
                );
-          } catch (err) {
+          } catch (err: any) {
                if (err.code !== 'ENOENT') {
                     this.serverless.cli.log(`Couldn't clean up temporary directory ${this.handlerFolder}.`);
                }
