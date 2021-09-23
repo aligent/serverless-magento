@@ -1,6 +1,6 @@
 {
   "name": "@aligent/serverless-magento",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Serverless plugin template",
   "main": "src/index.js",
   "scripts": {
