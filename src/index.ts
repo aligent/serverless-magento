@@ -1,6 +1,6 @@
 import Serverless, { Options } from "serverless";
 import { SSM } from 'aws-sdk';
-import { register, RegistrationRequest, RegistratonResponse, AdminConfiguration } from './lib/magento'
+import { register, RegistrationRequest, RegistrationResponse, AdminConfiguration } from './lib/magento'
 import chalk from 'chalk';
 import { AxiosError } from 'axios';
 import * as path from 'path';
@@ -100,7 +100,7 @@ class ServerlessMagento {
      /**
       * Perform a registration request against the Magento instance
       */
-     performServiceRegistration(): Promise<RegistratonResponse> {
+     performServiceRegistration(): Promise<RegistrationResponse> {
           this.serverless.cli.log(`Registering service with Magento application`);
 
           const registrationRequest = {
@@ -136,7 +136,7 @@ class ServerlessMagento {
      /**
       * Writes Magento service registration information to SSM.
      */
-     writeRegistrationSSMParams = (registration: RegistratonResponse): Promise<SSM.PutParameterResult[]>  => {
+     writeRegistrationSSMParams = (registration: RegistrationResponse): Promise<SSM.PutParameterResult[]>  => {
           this.serverless.cli.log(`Writing service context to SSM`);
 
           return Promise.all(

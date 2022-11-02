@@ -17,13 +17,13 @@ export interface RegistrationRequest {
      name: string,
 }
 
-export interface RegistratonResponse {
+export interface RegistrationResponse {
      name: string,
      service_id: string,
      registration_token: string
 }
 
-export interface RegistratonStatusResponse {
+export interface RegistrationStatusResponse {
      name: string,
      status: string
 }
@@ -37,13 +37,13 @@ const headers = {
      'Content-Type': 'application/json'
 };
 
-export const register = (baseUrl: string, apiVersion: number, data: RegistrationRequest): Promise<RegistratonResponse> => {
+export const register = (baseUrl: string, apiVersion: number, data: RegistrationRequest): Promise<RegistrationResponse> => {
      const registrationURL = `${baseUrl}/rest/V${apiVersion}/service/registration`;
      return  axios.post(registrationURL, data, {headers: headers, timeout: 3000})
      .then((res) => {return res.data});
 }
 
-export const getRegistrationStatus = (baseUrl: string, apiVersion: number, serviceId: number): Promise<RegistratonStatusResponse> => {
+export const getRegistrationStatus = (baseUrl: string, apiVersion: number, serviceId: number): Promise<RegistrationStatusResponse> => {
      const registrationURL = `${baseUrl}/rest/V${apiVersion}/service/${serviceId}/registration`;
      return  axios.get(registrationURL, {headers: headers, timeout: 3000})
      .then((res) => {return res.data});
