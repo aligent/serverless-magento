@@ -7,7 +7,7 @@ A [Serverless framework](https://www.serverless.com)  plugin for handling the re
 Serverless applications registered with the [magento2-microservice-config](https://bitbucket.org/aligent/magento2-microservice-config) module will have a [Magento authentication token](https://devdocs.magento.com/guides/v2.4/get-started/authentication/gs-authentication-token.html) made available via [AWS SSM](https://docs.aws.amazon.com/systems-manager/latest/userguide/ssm-agent.html). This removes the need to manually create Magento integrations / access tokens for each Serverless application. The registration also provides the opportunity to create an "admin" interface within the Magento admin interface which can be used for managing the serverless application.
 
 ## Admin Interface
-The admin interface is provided as a link to an externally hosed web application which is rendered in the Magento admin interface as an `iframe`. Authorisation context will be injected into the iframe when loaded. 
+The admin interface is provided as a link to an externally hosted web application which is rendered in the Magento admin interface as an `iframe`. Authorisation context will be injected into the iframe when loaded. 
 
 ## Deployment
 The registration happens as part of the Serverless deploy. If for any reason the registration is not able to take place, the deployment will fail (before any change set has been deployed).
