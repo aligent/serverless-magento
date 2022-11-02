@@ -1,6 +1,5 @@
-import axios, { AxiosResponse } from 'axios';
-const axiosRetry = require('axios-retry');
-import 'source-map-support/register';
+import axios from 'axios';
+import axiosRetry from 'axios-retry';
 
 axiosRetry(axios, {
   retries: 3,
@@ -50,7 +49,7 @@ export const getRegistrationStatus = (baseUrl: string, apiVersion: number, servi
      .then((res) => {return res.data});
 }
 
-export const activateRegistration = (baseUrl: string, apiVersion: number, serviceId: number, regisrationToken: String): Promise<ActivationResponse> => {
+export const activateRegistration = (baseUrl: string, apiVersion: number, serviceId: number, _registrationToken: String): Promise<ActivationResponse> => {
      const registrationURL = `${baseUrl}/rest/V${apiVersion}/service/${serviceId}/activation`;
      return  axios.post(registrationURL, {headers: headers, timeout: 3000})
      .then((res) => {return res.data});

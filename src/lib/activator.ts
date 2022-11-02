@@ -1,5 +1,5 @@
-import fs  = require('fs/promises');
-import path = require('path');
+import { mkdir, writeFile } from 'fs/promises';
+import * as path from 'path';
 import { exec } from 'child_process';
 
 export function addActivatorFunctionRoleToResources(service: any, ssmPrefix: string) {
@@ -211,11 +211,11 @@ export async function createActivatorFunctionArtifact(region: string,
 
           }`;
 
-          await fs.mkdir(handlerFolder, { recursive: true });
+          await mkdir(handlerFolder, { recursive: true });
           exec('npm init -y', { cwd: handlerFolder });
           exec('npm install --save aws-sdk', { cwd: handlerFolder });
           exec('npm install --save axios', { cwd: handlerFolder });
-          await fs.writeFile(path.join(handlerFolder, 'index.js'), activatorFunction);
+          await writeFile(path.join(handlerFolder, 'index.js'), activatorFunction);
 }
 
 export function addActivatorFunctionToService(service: any, activatorConfig: any) {

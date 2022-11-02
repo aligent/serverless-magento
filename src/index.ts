@@ -1,15 +1,13 @@
-import Serverless = require("serverless");
-import { Options } from "serverless";
-import { SSM, AWSError} from 'aws-sdk';
+import Serverless, { Options } from "serverless";
+import { SSM } from 'aws-sdk';
 import { register, RegistrationRequest, RegistratonResponse, AdminConfiguration } from './lib/magento'
-const chalk = require('chalk');
+import chalk from 'chalk';
 import { AxiosError } from 'axios';
-import path = require('path');
+import * as path from 'path';
 import {addActivatorFunctionRoleToResources,
      addActivatorFunctionToService,
      createActivatorFunctionArtifact} from './lib/activator'
-import fs  = require('fs/promises');
-import 'source-map-support/register';
+import { rm } from 'fs/promises';
 
 const ACTIVATOR_FUNCTION_DIR='activator';
 
@@ -181,7 +179,7 @@ class ServerlessMagento {
 
      cleanupTempDir = async () => {
           try {
-               await fs.rm(
+               await rm(
                     this.handlerFolder,
                     { recursive: true },
                );
