@@ -69,7 +69,8 @@ class ServerlessMagento implements ServerlessPlugin {
         });
 
         this.hooks = {
-            'after:deploy:deploy': this.performServiceRegistration.bind(this),
+            'after:deploy:deploy': this.registerService.bind(this),
+            'after:remove:remove': this.deregisterService.bind(this),
         };
     }
 
@@ -91,10 +92,10 @@ class ServerlessMagento implements ServerlessPlugin {
     /**
      * Perform a registration request against the Magento instance
      */
-    async performServiceRegistration() {
-        this.log.info(`Registering service with Magento application`);
+    async registerService() {
+        this.log.info(`Registering service with Magento`);
 
-        const { displayName, description, appUrl, permissions, magentoUrl } =
+        const { displayName, description, appUrl, permissions } =
             this.serviceRegistration;
 
         const serviceName = this.service.service;
@@ -109,7 +110,27 @@ class ServerlessMagento implements ServerlessPlugin {
             });
 
             this.log.info(
-                `Successfully registered ${serviceName} to ${magentoUrl}`,
+                `Successfully registered ${serviceName} with Magento`,
+            );
+        } catch (error) {
+            this.log.error((error as Error).toString());
+            throw error;
+        }
+    }
+
+    /**
+     * Perform a registration request against the Magento instance
+     */
+    async deregisterService() {
+        this.log.info(`Deregistering service from Magento`);
+
+        try {
+            await this.axiosInstance.delete(
+                `/v1/service/registrations?service_name=${this.service.service}`,
+            );
+
+            this.log.info(
+                `Successfully de-registered ${this.service.service} from Magento`,
             );
         } catch (error) {
             this.log.error((error as Error).toString());
