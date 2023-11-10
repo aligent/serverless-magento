@@ -126,7 +126,7 @@ class ServerlessMagento implements ServerlessPlugin {
 
         try {
             await this.axiosInstance.delete(
-                `/v1/service/registrations?service_name=${this.service.service}`,
+                `/v1/service/registrations/${this.service.service}`,
             );
 
             this.log.info(

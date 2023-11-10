@@ -25,11 +25,11 @@ custom:
   serviceRegistration:
     magentoUrl: https://magento.domain.name
     magentoApiToken: ${ssm:/magento/api/access-token-for-registration}
-    displayName: 'Service name that appears in Magento Admin'
-    description: 'Short description about the service'
+    displayName: Service name that appears in Magento Admin
+    description: Short description about the service
     appUrl: https://web-app-url.on.cloudfront
-    permissions: # Webapp does not need this
-      - All
+    permissions:
+      - Magento_Backend::all
 ```
 
 ### Variables
