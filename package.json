@@ -1,32 +1,40 @@
 {
   "name": "@aligent/serverless-magento",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A Serverless framework plugin for handling registration with the aligent/magento2-microservice-config module.",
-  "main": "src/index.js",
+  "main": "lib/index.js",
   "types": "index.d.ts",
   "scripts": {
     "build": "tsc",
     "prepublish": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "axios-retry": "^3.8.1"
+  },
   "devDependencies": {
-    "@types/node": "^16.3.3",
-    "@types/serverless": "^3.12.8",
-    "aws-sdk": "2.1368.0",
-    "ts-node": "^10.0.0",
-    "typescript": "^4.3.5"
+    "@tsconfig/node18": "^18.2.0",
+    "@tsconfig/strictest": "^2.0.1",
+    "@types/node": "^18.16.19",
+    "@types/serverless": "^3.12.17",
+    "@typescript-eslint/eslint-plugin": "^6.7.3",
+    "@typescript-eslint/parser": "^6.7.3",
+    "@vitest/coverage-istanbul": "^0.34.5",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "3.0.2",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2",
+    "vitest": "0.34.6"
   },
   "peerDependencies": {
-    "serverless": "2.x"
+    "serverless": "3.x"
   },
   "engines": {
-    "node": ">=10.0"
+    "npm": ">=9.0.0",
+    "node": "^18.16.0"
   },
-  "license": "MIT",
-  "dependencies": {
-    "axios": "^1.3.3",
-    "axios-retry": "^3.1.9",
-    "chalk": "^4.1.1",
-    "source-map-support": "^0.5.19"
-  }
+  "author": "Aligent Consulting",
+  "license": "MIT"
 }

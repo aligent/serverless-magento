@@ -5,6 +5,7 @@ jspm_packages
 # Serverless directories
 .serverless
 
-# ESBuild directories
+# Build artifacts
 .build
 *.js
+*.map
