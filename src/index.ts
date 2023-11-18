@@ -69,6 +69,7 @@ class ServerlessMagento implements ServerlessPlugin {
         });
 
         this.hooks = {
+            initialize: () => this.initialize(),
             'after:deploy:deploy': this.registerService.bind(this),
             'after:remove:remove': this.deregisterService.bind(this),
         };
