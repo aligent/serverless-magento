@@ -1,3 +1,4 @@
+import type CloudFormation from 'aws-sdk/clients/cloudformation';
 import axios, { AxiosInstance } from 'axios';
 import axiosRetry, {
     exponentialDelay,
@@ -6,15 +7,24 @@ import axiosRetry, {
 import type Serverless from 'serverless';
 import type ServerlessPlugin from 'serverless/classes/Plugin';
 import type Service from 'serverless/classes/Service';
+import type { Outputs } from 'serverless/plugins/aws/provider/awsProvider';
 
 interface ServiceRegistration {
     magentoUrl: string;
     magentoApiToken: string;
     displayName: string;
     description?: string;
-    appUrl?: string;
     permissions?: string[];
+    domainOutputKeyPrefix: string;
 }
+
+type ServerlessResources = Service['resources'] & {
+    Description?: string;
+    Outputs?: Outputs;
+};
+
+// This is the default output key when webapp is deployed by `serverless-lift`
+const DEFAULT_APP_URL_OUTPUT_KEY_PREFIX = 'landingDomain' as const;
 
 class ServerlessMagento implements ServerlessPlugin {
     serverless: Serverless;
@@ -47,18 +57,31 @@ class ServerlessMagento implements ServerlessPlugin {
                         magentoApiToken: { type: 'string' },
                         displayName: { type: 'string' },
                         description: { type: 'string' },
-                        appUrl: { type: 'string' },
                         permissions: {
                             type: 'array',
                             items: { type: 'string' },
                         },
+                        domainOutputKeyPrefix: { type: 'string' },
                     },
-                    require: ['magentoUrl', 'magentoApiToken', 'displayName'],
+                    required: ['magentoUrl', 'magentoApiToken', 'displayName'],
                 },
             },
         });
 
-        this.serviceRegistration = this.service.custom.serviceRegistration;
+        this.hooks = {
+            initialize: () => this.initialize(),
+            'after:deploy:deploy': this.registerService.bind(this),
+            'after:remove:remove': this.deregisterService.bind(this),
+        };
+    }
+
+    private async initialize() {
+        this.serviceRegistration = {
+            ...this.service.custom.serviceRegistration,
+            domainOutputKeyPrefix:
+                this.service.custom.serviceRegistration.domainOutputKeyPrefix ||
+                DEFAULT_APP_URL_OUTPUT_KEY_PREFIX,
+        };
 
         this.axiosInstance = axios.create({
             baseURL: this.serviceRegistration.magentoUrl,
@@ -68,13 +91,6 @@ class ServerlessMagento implements ServerlessPlugin {
             },
         });
 
-        this.hooks = {
-            'after:deploy:deploy': this.registerService.bind(this),
-            'after:remove:remove': this.deregisterService.bind(this),
-        };
-    }
-
-    async initialize() {
         axiosRetry(this.axiosInstance, {
             retryCondition: (error) => {
                 return isNetworkOrIdempotentRequestError(error);
@@ -92,50 +108,78 @@ class ServerlessMagento implements ServerlessPlugin {
     /**
      * Perform a registration request against the Magento instance
      */
-    async registerService() {
-        this.log.info(`Registering service with Magento`);
-
-        const { displayName, description, appUrl, permissions } =
+    private async registerService() {
+        const { displayName, description, domainOutputKeyPrefix, permissions } =
             this.serviceRegistration;
 
         const serviceName = this.service.service;
 
-        try {
-            await this.axiosInstance.put(`/v1/service/registrations`, {
-                app_name: serviceName,
-                display_name: displayName,
-                description: description || '',
-                app_url: appUrl || '',
-                permissions: permissions || [],
-            });
+        await this.axiosInstance.put(`/v1/service/registrations`, {
+            app_name: serviceName,
+            display_name: displayName,
+            description: description || this.getServiceDescription(),
+            app_url: await this.getAppUrlFromStackOutput(domainOutputKeyPrefix),
+            permissions: permissions || [],
+        });
 
-            this.log.info(
-                `Successfully registered ${serviceName} with Magento`,
+        this.log.success(`Successfully registered ${serviceName} with Magento`);
+    }
+
+    /**
+     * Perform a registration request against the Magento instance
+     */
+    private async deregisterService() {
+        await this.axiosInstance.delete(
+            `/v1/service/registrations/${this.service.service}`,
+        );
+
+        this.log.success(
+            `Successfully de-registered ${this.service.service} from Magento`,
+        );
+    }
+
+    private async getAppUrlFromStackOutput(outputKeyPrefix: string) {
+        const provider = this.serverless.getProvider('aws');
+        const serviceName = this.service.getServiceName();
+        const stackName = `${serviceName}-${provider.getStage()}`;
+
+        try {
+            const data = await provider.request(
+                'CloudFormation',
+                'describeStacks',
+                { StackName: stackName },
+                { region: provider.getRegion(), useCache: true },
             );
+
+            const stackOutputs = data.Stacks[0]
+                .Outputs as CloudFormation.Outputs;
+            if (!stackOutputs) {
+                throw new Error(`Unable to describe stack: ${serviceName}`);
+            }
+
+            const domainOutput = stackOutputs.filter(
+                (output) => output.OutputKey?.startsWith(outputKeyPrefix),
+            )[0];
+
+            if (!domainOutput || !domainOutput.OutputValue) {
+                this.log.verbose(
+                    `No appUrl found for output key prefix: ${outputKeyPrefix}`,
+                );
+            }
+
+            return domainOutput?.OutputValue
+                ? `https://${domainOutput.OutputValue}`
+                : '';
         } catch (error) {
             this.log.error((error as Error).toString());
             throw error;
         }
     }
 
-    /**
-     * Perform a registration request against the Magento instance
-     */
-    async deregisterService() {
-        this.log.info(`Deregistering service from Magento`);
-
-        try {
-            await this.axiosInstance.delete(
-                `/v1/service/registrations/${this.service.service}`,
-            );
-
-            this.log.info(
-                `Successfully de-registered ${this.service.service} from Magento`,
-            );
-        } catch (error) {
-            this.log.error((error as Error).toString());
-            throw error;
-        }
+    private getServiceDescription() {
+        return (
+            (this.service.resources as ServerlessResources).Description || ''
+        );
     }
 }
 

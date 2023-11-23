@@ -26,18 +26,17 @@ custom:
     magentoUrl: https://magento.domain.name
     magentoApiToken: ${ssm:/magento/api/access-token-for-registration}
     displayName: Service name that appears in Magento Admin
-    description: Short description about the service
-    appUrl: https://web-app-url.on.cloudfront
     permissions:
       - Magento_Backend::all
 ```
 
 ### Variables
 
-| Variable    | Usage                                                                                   |
-| ----------- | --------------------------------------------------------------------------------------- |
-| magentoUrl  | The base URL - including scheme - of the Magento instance.                              |
-| displayName | The name of the application/service.                                                    |
-| description | Short description about the application/service.                                        |
-| appUrl      | The url to access webapp (Only applicable for webapp, other service does not need this) |
-| permission  | Array of Magento permission. Webapp does not need this                                  |
+| Variable              | Usage                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
+| magentoUrl            | The base URL - including scheme - of the Magento instance.                                             |
+| magentoApiToken       | The api token for registering with Magento instance.                                                   |
+| displayName           | The name of the application/service.                                                                   |
+| description           | Short description about the application/service. If not provided, `resources/Description` will be used |
+| permission            | Array of Magento permission. Webapp does not need this                                                 |
+| domainOutputKeyPrefix | The prefix of webapp domain output key. The default value is `landingDomain`.                          |

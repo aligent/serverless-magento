@@ -1,12 +1,15 @@
 {
   "name": "@aligent/serverless-magento",
-  "version": "0.0.5",
-  "description": "A Serverless framework plugin for handling registration with the aligent/magento2-microservice-config module.",
-  "main": "lib/index.js",
-  "types": "index.d.ts",
+  "version": "0.0.6",
+  "description": "A Serverless framework plugin for handling registration with the aligent/magento2-microservice-config module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
   "scripts": {
-    "build": "tsc",
-    "prepublish": "tsc",
+    "build": "tsc -p tsconfig.lib.json",
+    "prepublish": "tsc -p tsconfig.lib.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
