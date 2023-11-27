@@ -114,7 +114,7 @@ class ServerlessMagento implements ServerlessPlugin {
 
         const serviceName = this.service.service;
 
-        await this.axiosInstance.put(`/v1/service/registrations`, {
+        await this.axiosInstance.put(`/rest/V1/service/registrations`, {
             app_name: serviceName,
             display_name: displayName,
             description: description || this.getServiceDescription(),
@@ -130,7 +130,7 @@ class ServerlessMagento implements ServerlessPlugin {
      */
     private async deregisterService() {
         await this.axiosInstance.delete(
-            `/v1/service/registrations/${this.service.service}`,
+            `/rest/V1/service/registrations/${this.service.service}`,
         );
 
         this.log.success(
