@@ -150,7 +150,9 @@ class ServerlessMagento implements ServerlessPlugin {
             ).toString()}`;
 
             if (isAxiosError(error)) {
-                errorMessage += `\n${JSON.stringify(error.response?.data)}`;
+                errorMessage += `\nResponse: ${JSON.stringify(
+                    error.response?.data,
+                )}`;
             }
 
             throw new this.serverless.classes.Error(errorMessage);
@@ -161,13 +163,31 @@ class ServerlessMagento implements ServerlessPlugin {
      * Perform a registration request against the Magento instance
      */
     private async deregisterService() {
-        await this.axiosInstance.delete(
-            `/rest/V1/service/registrations/${this.service.service}`,
-        );
+        const serviceName = this.service.service;
 
-        this.log.success(
-            `Successfully de-registered ${this.service.service} from Magento`,
-        );
+        this.log.info(`De-registering service with Magento`);
+
+        try {
+            await this.axiosInstance.delete(
+                `/rest/V1/service/registrations/${serviceName}`,
+            );
+
+            this.log.success(
+                `Successfully de-registered ${serviceName} from Magento`,
+            );
+        } catch (error) {
+            let errorMessage = `Unable to de-register ${serviceName} with Magento due to: ${(
+                error as Error
+            ).toString()}`;
+
+            if (isAxiosError(error)) {
+                errorMessage += `\nResponse: ${JSON.stringify(
+                    error.response?.data,
+                )}`;
+            }
+
+            throw new this.serverless.classes.Error(errorMessage);
+        }
     }
 
     private async getAppUrlFromStackOutput(outputKeyPrefix: string) {
