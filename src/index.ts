@@ -1,5 +1,5 @@
 import type CloudFormation from 'aws-sdk/clients/cloudformation';
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, isAxiosError } from 'axios';
 import axiosRetry, {
     exponentialDelay,
     isNetworkOrIdempotentRequestError,
@@ -23,11 +23,25 @@ type ServerlessResources = Service['resources'] & {
     Outputs?: Outputs;
 };
 
+interface ServerlessError extends Error {
+    code: string;
+}
+
+interface ServerlessErrorConstructor {
+    new (message?: string): ServerlessError;
+    (message?: string): ServerlessError;
+    readonly prototype: ServerlessError;
+}
+
+interface ServerlessClasses extends Serverless {
+    classes?: { Error: ServerlessErrorConstructor };
+}
+
 // This is the default output key when webapp is deployed by `serverless-lift`
 const DEFAULT_APP_URL_OUTPUT_KEY_PREFIX = 'landingDomain' as const;
 
 class ServerlessMagento implements ServerlessPlugin {
-    serverless: Serverless;
+    serverless: ServerlessClasses;
     options: Serverless.Options;
     hooks: ServerlessPlugin.Hooks;
     service: Service;
@@ -38,7 +52,7 @@ class ServerlessMagento implements ServerlessPlugin {
     axiosInstance: AxiosInstance;
 
     constructor(
-        serverless: Serverless,
+        serverless: ServerlessClasses,
         options: Serverless.Options,
         { log }: { log: ServerlessPlugin.Logging['log'] },
     ) {
@@ -114,28 +128,66 @@ class ServerlessMagento implements ServerlessPlugin {
 
         const serviceName = this.service.service;
 
-        await this.axiosInstance.put(`/rest/V1/service/registrations`, {
-            app_name: serviceName,
-            display_name: displayName,
-            description: description || this.getServiceDescription(),
-            app_url: await this.getAppUrlFromStackOutput(domainOutputKeyPrefix),
-            permissions: permissions || [],
-        });
+        this.log.info(`Registering service with Magento`);
 
-        this.log.success(`Successfully registered ${serviceName} with Magento`);
+        try {
+            await this.axiosInstance.put(`/rest/V1/service/registrations`, {
+                app_name: serviceName,
+                display_name: displayName,
+                description: description || this.getServiceDescription(),
+                app_url: await this.getAppUrlFromStackOutput(
+                    domainOutputKeyPrefix,
+                ),
+                permissions: permissions || [],
+            });
+
+            this.log.success(
+                `Successfully registered ${serviceName} with Magento`,
+            );
+        } catch (error) {
+            let errorMessage = `Unable to register ${serviceName} with Magento due to: ${(
+                error as Error
+            ).toString()}`;
+
+            if (isAxiosError(error)) {
+                errorMessage += `\nResponse: ${JSON.stringify(
+                    error.response?.data,
+                )}`;
+            }
+
+            throw new this.serverless.classes.Error(errorMessage);
+        }
     }
 
     /**
      * Perform a registration request against the Magento instance
      */
     private async deregisterService() {
-        await this.axiosInstance.delete(
-            `/rest/V1/service/registrations/${this.service.service}`,
-        );
+        const serviceName = this.service.service;
 
-        this.log.success(
-            `Successfully de-registered ${this.service.service} from Magento`,
-        );
+        this.log.info(`De-registering service with Magento`);
+
+        try {
+            await this.axiosInstance.delete(
+                `/rest/V1/service/registrations/${serviceName}`,
+            );
+
+            this.log.success(
+                `Successfully de-registered ${serviceName} from Magento`,
+            );
+        } catch (error) {
+            let errorMessage = `Unable to de-register ${serviceName} with Magento due to: ${(
+                error as Error
+            ).toString()}`;
+
+            if (isAxiosError(error)) {
+                errorMessage += `\nResponse: ${JSON.stringify(
+                    error.response?.data,
+                )}`;
+            }
+
+            throw new this.serverless.classes.Error(errorMessage);
+        }
     }
 
     private async getAppUrlFromStackOutput(outputKeyPrefix: string) {
@@ -144,6 +196,8 @@ class ServerlessMagento implements ServerlessPlugin {
         const stackName = `${serviceName}-${provider.getStage()}`;
 
         try {
+            this.log.info(`Getting stack output of ${serviceName}`);
+
             const data = await provider.request(
                 'CloudFormation',
                 'describeStacks',
