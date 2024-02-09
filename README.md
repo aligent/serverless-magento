@@ -8,7 +8,7 @@ Microservices registered with the [magento2-microservice-config](https://bitbuck
 
 ## Admin Interface
 
-The admin interface is provided as a link to an externally hosed web application which is rendered in the Magento admin interface as an `iframe`. Authorisation context will be injected into the iframe when loaded.
+The admin interface is provided as a link to an externally hosted web application which is rendered in the Magento admin interface as an `iframe`. Authorisation context will be injected into the iframe when loaded.
 
 ## Deployment
 
@@ -32,11 +32,12 @@ custom:
 
 ### Variables
 
-| Variable              | Usage                                                                                                  |
-| --------------------- | ------------------------------------------------------------------------------------------------------ |
-| magentoUrl            | The base URL - including scheme - of the Magento instance.                                             |
-| magentoApiToken       | The api token for registering with Magento instance.                                                   |
-| displayName           | The name of the application/service.                                                                   |
-| description           | Short description about the application/service. If not provided, `resources/Description` will be used |
-| permission            | Array of Magento permission. Webapp does not need this                                                 |
-| domainOutputKeyPrefix | The prefix of webapp domain output key. The default value is `landingDomain`.                          |
+| Variable              | Type    | Usage                                                                                                           |
+| --------------------- | ------- | --------------------------------------------------------------------------------------------------------------- |
+| magentoUrl            | string  | The base URL - including scheme - of the Magento instance.                                                      |
+| magentoApiToken       | string  | The api token for registering with Magento instance.                                                            |
+| displayName           | string  | The name of the application/service.                                                                            |
+| description           | string  | Short description about the application/service. If not provided, `resources/Description` will be used          |
+| permission            | string  | Array of Magento permission. Webapp does not need this.                                                         |
+| domainOutputKeyPrefix | string  | The prefix of webapp domain output key. The default value is `landingDomain`.                                   |
+| errorOnFailure        | boolean | Whether the plugin should throw an error when a call to the Magento instance fails. The default value is `true` |
