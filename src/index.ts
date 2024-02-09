@@ -16,6 +16,7 @@ interface ServiceRegistration {
     description?: string;
     permissions?: string[];
     domainOutputKeyPrefix: string;
+    errorOnFailure?: boolean;
 }
 
 type ServerlessResources = Service['resources'] & {
@@ -76,6 +77,7 @@ class ServerlessMagento implements ServerlessPlugin {
                             items: { type: 'string' },
                         },
                         domainOutputKeyPrefix: { type: 'string' },
+                        errorOnFailure: { type: 'boolean' },
                     },
                     required: ['magentoUrl', 'magentoApiToken', 'displayName'],
                 },
@@ -91,6 +93,7 @@ class ServerlessMagento implements ServerlessPlugin {
 
     private async initialize() {
         this.serviceRegistration = {
+            errorOnFailure: true, // Default to throw an error when failing to register/deregister
             ...this.service.custom.serviceRegistration,
             domainOutputKeyPrefix:
                 this.service.custom.serviceRegistration.domainOutputKeyPrefix ||
@@ -155,7 +158,11 @@ class ServerlessMagento implements ServerlessPlugin {
                 )}`;
             }
 
-            throw new this.serverless.classes.Error(errorMessage);
+            if (this.serviceRegistration.errorOnFailure) {
+                throw new this.serverless.classes.Error(errorMessage);
+            } else {
+                this.log.warning(errorMessage);
+            }
         }
     }
 
@@ -186,7 +193,11 @@ class ServerlessMagento implements ServerlessPlugin {
                 )}`;
             }
 
-            throw new this.serverless.classes.Error(errorMessage);
+            if (this.serviceRegistration.errorOnFailure) {
+                throw new this.serverless.classes.Error(errorMessage);
+            } else {
+                this.log.warning(errorMessage);
+            }
         }
     }
 
