@@ -23,13 +23,13 @@
     "@types/serverless": "^3.12.17",
     "@typescript-eslint/eslint-plugin": "^6.7.3",
     "@typescript-eslint/parser": "^6.7.3",
-    "@vitest/coverage-istanbul": "^0.34.5",
+    "@vitest/coverage-istanbul": "^1.0.4",
     "eslint": "^8.50.0",
     "eslint-config-prettier": "^9.0.0",
     "prettier": "3.0.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.2.2",
-    "vitest": "0.34.6"
+    "vitest": "1.0.4"
   },
   "peerDependencies": {
     "serverless": "3.x"
